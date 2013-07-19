@@ -32,4 +32,4 @@ cookbooks.each do |cookbook|
   data3["children"] << cdata
 end
 
-File.open('flare.json', 'w').write(MultiJson.dump(data3))
+File.open('flare.json', 'w').write(MultiJson.dump(data3, :pretty => true))
