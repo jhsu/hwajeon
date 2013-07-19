@@ -1,10 +1,12 @@
 <!DOCTYPE html>
+<head>
 <meta charset="utf-8">
 <style>
 
   body {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     margin: auto;
+    margin-top: 30px;
     position: relative;
     width: 960px;
   }
@@ -14,6 +16,42 @@
     right: 10px;
     top: 10px;
   }
+
+    button {
+      font: 14px Helvetica Neue;
+      background-color: #222;
+      background-image: -moz-linear-gradient(top, rgba(255,255,255,.25), rgba(255,255,255,.11));
+      background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, rgba(255,255,255,.25)),color-stop(1, rgba(255,255,255,.11)));
+      background-image: -webkit-linear-gradient(rgba(255,255,255,.25), rgba(255,255,255,.11));
+      color: #fff;
+      text-rendering: optimizeLegibility;
+      text-shadow: 0 -1px 1px #222;
+      padding: 6px 10px 6px 10px;
+      border: 0;
+      border-radius: 0;
+      border-bottom: 1px solid #222;
+      margin: 0;
+      -moz-box-shadow: 0 1px 3px #999;
+      -webkit-box-shadow: 0 1px 3px #999;
+    }
+
+    button.first {
+      border-top-left-radius: 5px;
+      border-bottom-left-radius: 5px;
+    }
+
+    button.last {
+      border-top-right-radius: 5px;
+      border-bottom-right-radius: 5px;
+    }
+
+    button.active {
+      background-color: rgb(65,102,133);
+    }
+
+    button:hover {
+      background-color: steelblue;
+    }
 
   .tooltip, .tooltip-pending-removal {
     position: absolute;
@@ -42,13 +80,15 @@
   }
 
 </style>
-<form>
-  <label><input type="radio" name="mode" value="size"> Size</label>
-  <label><input type="radio" name="mode" value="count" checked> Count</label>
-</form>
 <script src="http://d3js.org/d3.v3.min.js"></script>
-<script>
+</head>
+<body>
+    <div id="chart">
+      <button id="size" class="first">Size</button><button id="count" class="active last">Count</button>
+      <p>
+    </div>
 
+<script>
   var width = 960,
   height = 700,
   radius = Math.min(width, height) / 2,
@@ -88,8 +128,8 @@
       })
       .each(stash);
 
-      d3.selectAll("input").on("change", function change() {
-        var value = this.value === "count"
+      d3.selectAll("button").on("click", function change() {
+        var value = this.id === "count"
         ? function() { return 1; }
         : function(d) { return d.instance_vars.elapsed_time; };
 
@@ -193,3 +233,5 @@ d3.select(self.frameElement).style("height", height + "px");
   })()
 
 </script>
+</body>
+</html>
