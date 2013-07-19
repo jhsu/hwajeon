@@ -51,6 +51,7 @@
 
     button:hover {
       background-color: steelblue;
+      cursor: pointer;
     }
 
   .tooltip, .tooltip-pending-removal {
@@ -138,6 +139,14 @@
         .transition()
         .duration(1500)
         .attrTween("d", arcTween);
+
+        if (this.id === 'count') {
+            d3.select("#size").classed("active", false);
+            d3.select("#count").classed("active", true);
+        } else {
+            d3.select("#size").classed("active", true);
+            d3.select("#count").classed("active", false);
+        }
       });
     });
 
