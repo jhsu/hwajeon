@@ -80,6 +80,11 @@
     box-shadow: 4px 4px 8px rgba(0,0,0,.5);
   }
 
+path {
+  stroke: #fff;
+  fill-rule: evenodd;
+}
+
 </style>
 <script src="http://d3js.org/d3.v3.min.js"></script>
 </head>
@@ -119,10 +124,10 @@
       .attr("display", function(d) { return d.depth ? null : "none"; }) // hide inner ring
       .attr("d", arc)
       .style("stroke", "#fff")
-      .style("fill", function(d) { return color((d.children ? d : d.parent).instance_vars.name); })
+      .style("fill", function(d) { return color((d.children ? d : d.parent).name); })
       .style("fill-rule", "evenodd")
       .on("mouseover", function(d) {
-        tooltip.show([d3.event.clientX,d3.event.clientY],'<div>'+d.instance_vars.name+'</div>  <div>'+d.value+'</div>')
+        tooltip.show([d3.event.clientX,d3.event.clientY],'<div>'+d.name+'</div>  <div>'+d.value+'</div>')
       })
       .on('mouseout',function(){
         tooltip.cleanup()
