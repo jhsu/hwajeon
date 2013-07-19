@@ -137,7 +137,7 @@ path {
       d3.selectAll("button").on("click", function change() {
         var value = this.id === "count"
         ? function() { return 1; }
-        : function(d) { return d.instance_vars.elapsed_time; };
+        : function(d) { return d.elapsed_time; };
 
         path
         .data(partition.value(value).nodes)
