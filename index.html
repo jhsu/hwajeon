@@ -1,178 +1,222 @@
 <!DOCTYPE html>
 <head>
 <meta charset="utf-8">
-<style>
-
-  body {
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    margin: auto;
-    margin-top: 30px;
-    position: relative;
-    width: 960px;
-  }
-
-  form {
-    position: absolute;
-    right: 10px;
-    top: 10px;
-  }
-
-    button {
-      font: 14px Helvetica Neue;
-      background-color: #222;
-      background-image: -moz-linear-gradient(top, rgba(255,255,255,.25), rgba(255,255,255,.11));
-      background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, rgba(255,255,255,.25)),color-stop(1, rgba(255,255,255,.11)));
-      background-image: -webkit-linear-gradient(rgba(255,255,255,.25), rgba(255,255,255,.11));
-      color: #fff;
-      text-rendering: optimizeLegibility;
-      text-shadow: 0 -1px 1px #222;
-      padding: 6px 10px 6px 10px;
-      border: 0;
-      border-radius: 0;
-      border-bottom: 1px solid #222;
-      margin: 0;
-      -moz-box-shadow: 0 1px 3px #999;
-      -webkit-box-shadow: 0 1px 3px #999;
-    }
-
-    button.first {
-      border-top-left-radius: 5px;
-      border-bottom-left-radius: 5px;
-    }
-
-    button.last {
-      border-top-right-radius: 5px;
-      border-bottom-right-radius: 5px;
-    }
-
-    button.active {
-      background-color: rgb(65,102,133);
-    }
-
-    button:hover {
-      background-color: steelblue;
-      cursor: pointer;
-    }
-
-  .tooltip, .tooltip-pending-removal {
-    position: absolute;
-    background-color: rgba(255,255,255,1);
-    padding: 10px;
-    border: 1px solid #ddd;
-    z-index: 10000;
-    display: inline-block;
-    font-family: Arial;
-    font-size: 13px;
-    border-radius: 10px;
-    pointer-events: none;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    user-select: none;
-  }
-
-  .tooltip {
-    transition: opacity 500ms linear;
-    -webkit-transition: opacity 500ms linear;
-    transition-delay: 500ms;
-    -webkit-transition-delay: 500ms;
-    -moz-box-shadow: 4px 4px 8px rgba(0,0,0,.5);
-    -webkit-box-shadow: 4px 4px 8px rgba(0,0,0,.5);
-    box-shadow: 4px 4px 8px rgba(0,0,0,.5);
-  }
-
-path {
-  stroke: #fff;
-  fill-rule: evenodd;
-}
-
-</style>
+<link rel="stylesheet" type="text/css" href="styles.css">
 <script src="http://d3js.org/d3.v3.min.js"></script>
 </head>
 <body>
-    <div id="chart">
-      <button id="size" class="first">Size</button><button id="count" class="active last">Count</button>
-      <p>
+    <div id="container">
+     <div id="chart">
+      <div id="sidebar">
+        <div id="top">
+          <div class="item">
+           <div class="circle"></div>
+           <span class="name"></span>
+           <div class="size">
+             <span class="time"></span>
+             <span>Seconds</span>
+           </div>
+           <div class="extra"></div>
+          </div>
+        </div>
+
+        <div id="children">
+        </div>
+
+      </div>
+     </div>
     </div>
 
 <script>
-  var width = 960,
-  height = 700,
-  radius = Math.min(width, height) / 2,
-  color = d3.scale.category20c();
+    var width = 660,
+        height = 700,
+        radius = width / 2,
+        x = d3.scale.linear().range([0, 2 * Math.PI]),
+        y = d3.scale.pow().exponent(1.3).domain([0, 1]).range([0, radius]),
+        color = d3.scale.category10();
+        padding = 5,
+        duration = 1000;
 
-  var svg = d3.select("body").append("svg")
-  .attr("width", width)
-  .attr("height", height)
-  .append("g")
-  .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+    var div = d3.select("#chart")
+    var svg = div.append("svg")
+      .attr("width", width + padding * 2)
+      .attr("height", height + padding * 2)
+    .append("g")
+      .attr("transform", "translate(" + [radius + padding, radius + padding] + ")")
+       .on('mouseleave', function() {
+            // When a user moves outside the main container we should revert the sidebar
+            load()
+        })
 
-  var partition = d3.layout.partition()
-  .sort(null)
-  .size([2 * Math.PI, radius * radius])
-  .value(function(d) { return 1; });
+    var partition = d3.layout.partition()
+        .sort(function(a, b) { return d3.ascending(a.value, b.value); })
+        .value(function(d) { return d.size; });
 
-  var arc = d3.svg.arc()
-  .startAngle(function(d) { return d.x; })
-  .endAngle(function(d) { return d.x + d.dx; })
-  .innerRadius(function(d) { return Math.sqrt(d.y); })
-  .outerRadius(function(d) { return Math.sqrt(d.y + d.dy); });
+    var arc = d3.svg.arc()
+        .startAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x))); })
+        .endAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x + d.dx))); })
+        .innerRadius(function(d) { return Math.max(0, d.y ? y(d.y) : d.y); })
+        .outerRadius(function(d) { return Math.max(0, y(d.y + d.dy)); });
 
-  d3.json("flare.json", function(error, root) {
-    var path = svg.datum(root).selectAll("path")
+
+  d3.json("flare.json", function(error, data) {
+    var path = svg.datum(data).selectAll("path")
     .data(partition.nodes)
-    .enter().append("path")
-      .attr("display", function(d) { return d.depth ? null : "none"; }) // hide inner ring
+    .enter()
+    .append("path")
+      .each(function (d, i) {
+        // Make sure the path id is in the object
+        d.id = i
+      })
+      .attr("id", function(d, i) { return "path-" + i; })
       .attr("d", arc)
-      .style("stroke", "#fff")
-      .style("fill", function(d) { return color((d.children ? d : d.parent).name); })
-      .style("fill-rule", "evenodd")
-      .on("mouseover", function(d) {
-        tooltip.show([d3.event.clientX,d3.event.clientY],'<div>'+d.name+'</div>  <div>'+d.value+'</div>')
+      .style("fill", function(d) {
+        // Use name and id as many names can be identical
+        node = (d.children ? d : d.parent)
+        return color(node.name + node.id);
       })
-      .on('mouseout',function(){
-        tooltip.cleanup()
-      })
-      .each(stash);
+      .on("mouseover", mouseover)
+      .on('mouseout', mouseout)
+      .on('click', click);
 
-      d3.selectAll("button").on("click", function change() {
-        var value = this.id === "count"
-        ? function() { return 1; }
-        : function(d) { return d.elapsed_time; };
-
-        path
-        .data(partition.value(value).nodes)
-        .transition()
-        .duration(1500)
-        .attrTween("d", arcTween);
-
-        if (this.id === 'count') {
-            d3.select("#size").classed("active", false);
-            d3.select("#count").classed("active", true);
-        } else {
-            d3.select("#size").classed("active", true);
-            d3.select("#count").classed("active", false);
+      // Depends on the path variable
+      function click(d) {
+        // No point in clicking into a childrenless node
+        if (!d.children) {
+          return;
         }
-      });
+
+        path.transition()
+          .duration(750)
+          .attrTween("d", arcTween(d));
+
+        cleanupSidebar()
+        updateSidebar(d)
+
+        location.hash = d.id
+      }
+
+      function mouseover(d) {
+        cleanupSidebar()
+        updateSidebar(d)
+        tooltip.show([d3.event.clientX,d3.event.clientY],'<div>'+d.name+'</div>  <div>'+d3.round(d.value, 3)+' secs</div>  <div>' + d.instance_vars.source_line + '</div>')
+
+        node = d3.select('#path-' + d.id)
+        original = node.style('fill')
+        //setInterval(function(){ pulsate(node, original) } , 1000);
+      }
+
+      function mouseout(d, e){
+        // Fix the color back
+        d3.select('#path-' + d.id).style('fill', original)
+        cleanupSidebar()
+        tooltip.cleanup()
+      }
+
+      // Set the initial node
+      load()
     });
 
-// Stash the old values for transition.
-function stash(d) {
-  d.x0 = d.x;
-  d.dx0 = d.dx;
-}
-
-// Interpolate the arcs in data space.
-function arcTween(a) {
-  var i = d3.interpolate({x: a.x0, dx: a.dx0}, a);
-  return function(t) {
-    var b = i(t);
-    a.x0 = b.x;
-    a.dx0 = b.dx;
-    return arc(b);
+// Interpolate the scales!
+function arcTween(d) {
+  var xd = d3.interpolate(x.domain(), [d.x, d.x + d.dx]),
+      yd = d3.interpolate(y.domain(), [d.y, 1]),
+      yr = d3.interpolate(y.range(), [d.y ? 20 : 0, radius]);
+  return function(d, i) {
+    return i
+        ? function(t) { return arc(d); }
+        : function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); return arc(d); };
   };
 }
 
 d3.select(self.frameElement).style("height", height + "px");
+
+// Graph event code
+function load() {
+  var id = 0
+  var hash = location.hash.substring(1);
+  if (hash != "") {
+    id = parseInt(hash)
+  }
+
+  updateSidebar(d3.select('#path-' + id).datum())
+  fakeClick(id)
+}
+
+function pulsate(node, original) {
+    color = d3.rgb(original)
+    node
+    .transition()
+    .duration(700)
+    .style('fill', color.darker(1))
+    .transition()
+    .duration(300)
+    .style('fill', original)
+}
+
+function fakeClick(id) {
+    // Fake click the element. Could be replaced with jquery trigger()
+    var event = document.createEvent("SVGEvents");
+    event.initEvent("click",true,true);
+    d3.select('#path-' + id).node().dispatchEvent(event);
+    location.hash = id
+}
+
+function cleanupSidebar() {
+    // FIXME this is shit, improve
+    d3.select('#children').remove()
+    d3.select('#sidebar').append('div').attr('id', 'children')
+}
+
+function updateSidebar(d) {
+    node = d3.select('#path-' + d.id)
+    d3.select('#top .item .circle').style('background-color', node.style('fill'))
+    d3.select('#top .item .name').text(d.name)
+    d3.select('#top .item .time').text(d3.round(d.value, 3))
+
+    // If no children then stop seeking
+    if (!d.children) {
+      return;
+    }
+
+    children = d.children
+    // Sort based on size (time)
+    children.sort(function(a, b) { return d3.ascending(a.value, b.value); })
+
+    children_div = d3.select('#children')
+    for (var i = children.length - 1; i >= 0; i -= 1) {
+        child = children[i]
+        node = d3.select('#path-' + child.id)
+
+        div = children_div.append('div')
+        div.classed('item', 'item')
+        div.attr('id', child.id)
+        div.append('div').classed('circle', 'circle').style('background-color', node.style('fill'))
+        div.append('span').classed('name', 'name').text(child.name)
+        div.on('click', function(d) {
+            id = d3.select(this).attr('id')
+            fakeClick(id)
+        })
+        div.on('mouseover', function() {
+            id = d3.select(this).attr('id')
+            node = d3.select('#path-' + id)
+            original = node.style('fill')
+            //setInterval(function(){ pulsate(node, original) } , 1000);
+        })
+        div.on('mouseout', function() {
+            // Fix the color back
+            id = d3.select(this).attr('id')
+            d3.select('#path-' + id).style('fill', original)
+        })
+
+        time = div.append('div').classed('size', 'size')
+        time.append('span').classed('time', 'time').text(d3.round(child.value, 3))
+        time.append('span').text('Seconds')
+    }
+
+}
+
+
 
 (function() {
 
