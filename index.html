@@ -99,7 +99,11 @@
       function mouseover(d) {
         cleanupSidebar()
         updateSidebar(d)
-        tooltip.show([d3.event.clientX,d3.event.clientY],'<div>'+d.name+'</div>  <div>'+d3.round(d.value, 3)+' secs</div>  <div>' + d.instance_vars.source_line + '</div>')
+        tooltip_text = '<div>'+d.name+'</div>  <div>'+d3.round(d.value, 3)+' secs</div>';
+        if (d.instance_vars.source_line) {
+            tooltip_text = tooltip_text + '  <div>' + d.instance_vars.source_line + '</div>'
+        }
+        tooltip.show([d3.event.clientX,d3.event.clientY], tooltip_text)
 
         node = d3.select('#path-' + d.id)
         original = node.style('fill')
