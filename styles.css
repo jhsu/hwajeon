@@ -1,5 +1,6 @@
   body {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background-color: #1d1f20;
   }
 
   #container {
@@ -11,7 +12,6 @@
 
   #chart {
     width: 1280px;
-    background-color: #1d1f20;
   }
 
   #chart svg {

@@ -86,9 +86,23 @@
           return;
         }
 
-        path.transition()
+        path
+          .transition()
           .duration(750)
           .attrTween("d", arcTween(d));
+
+        if (d.depth > 0) {
+            path.style("fill", function(d) {
+                // Use name and id as many names can be identical
+                return color(d.name + d.id);
+              })
+        } else{
+            path.style("fill", function(d) {
+                // Use name and id as many names can be identical
+                node = (d.children ? d : d.parent)
+                return color(node.name + node.id);
+              })
+        }
 
         cleanupSidebar()
         updateSidebar(d)
