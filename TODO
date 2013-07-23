@@ -2,7 +2,6 @@
     Basically add the ability to have only whole numbers and discard everything smaller
 2.  Better sidebar styling
 3.  See if we can give each slice more weight so smaller slices are more visible
-4.  Make words fit on a single line, use CSS to shorten
-5.  Use tooltip to expand text or make text area expand when hovering over it
-6.  Look into pulling in more Chef data for each node in the sidebar if viable
-7.  Improve pulsating so it doesn't lag so much
+4.  Use tooltip to expand text or make text area expand when hovering over it
+5.  Look into pulling in more Chef data for each node in the sidebar if viable
+6.  Improve pulsating so it doesn't lag so much
