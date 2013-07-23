@@ -6,4 +6,3 @@
 5.  Use tooltip to expand text or make text area expand when hovering over it
 6.  Look into pulling in more Chef data for each node in the sidebar if viable
 7.  Improve pulsating so it doesn't lag so much
-8.  Fix tooltip undefined thing

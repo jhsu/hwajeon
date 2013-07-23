@@ -42,7 +42,7 @@
 
   .extra {
     width: 350px;
-    margin-top: 6px;
+    margin-top: 12px;
     font-size: 12px;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -58,7 +58,10 @@
     -webkit-hyphens: auto;
     -moz-hyphens: auto;
     hyphens: auto;
-    display: none;
+  }
+
+  .extra div {
+    margin-bottom: 10px;
   }
 
   #children {

@@ -81,6 +81,10 @@
 
       // Depends on the path variable
       function click(d) {
+        cleanupSidebar()
+        updateSidebar(d)
+        location.hash = d.id
+
         // No point in clicking into a childrenless node
         if (!d.children) {
           return;
@@ -103,11 +107,6 @@
                 return color(node.name + node.id);
               })
         }
-
-        cleanupSidebar()
-        updateSidebar(d)
-
-        location.hash = d.id
       }
 
       function mouseover(d) {
@@ -191,9 +190,45 @@ function updateSidebar(d) {
     d3.select('#top .item .circle').style('background-color', node.style('fill'))
     d3.select('#top .item .name').text(d.name)
     d3.select('#top .item .time').text(d3.round(d.value, 3))
+    d3.select('#top .item .extra').text('')
 
     // If no children then stop seeking
     if (!d.children) {
+      // Build up info about the node
+      if (d.instance_vars.command) {
+        d3.select('.extra').append('div').html('<strong>Command:</strong><br/>' + d.instance_vars.command)
+      }
+
+      if (d.instance_vars.code) {
+        d3.select('.extra').append('div').html('<strong>Code:</strong><br/>' + d.instance_vars.code)
+      }
+
+      if (d.instance_vars.source) {
+        d3.select('.extra').append('div').html('<strong>Source:</strong><br/>' + d.instance_vars.source)
+      }
+
+      if (d.instance_vars.source_line) {
+        d3.select('.extra').append('div').html('<strong>Source Line:</strong><br/>' + d.instance_vars.source_line)
+      }
+
+      if (
+        d.instance_vars.resource_name === 'package' ||
+        d.instance_vars.resource_name === 'gem_package'
+      ) {
+        if (typeof d.instance_vars.action === 'array') {
+            action = d.instance_vars.action[0]
+        } else {
+            action = d.instance_vars.action
+        }
+
+        type = ''
+        if (d.instance_vars.resource_name === 'gem_package') {
+            type = 'Gem '
+        }
+
+        d3.select('.extra').append('div').html('<strong>' + type + 'Package ' + action + ':</strong><br/>' + d.instance_vars.package_name + ' - v' + d.instance_vars.version)
+      }
+
       return;
     }
 
