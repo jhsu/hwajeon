@@ -3,39 +3,37 @@
 <meta charset="utf-8">
 <link rel="stylesheet" type="text/css" href="styles.css">
 <script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="d3-tooltip.js"></script>
 </head>
 <body>
-    <div id="container">
-     <div id="chart">
-      <div id="sidebar">
-        <div id="top">
-          <div class="item">
-           <div class="circle"></div>
-           <span class="name"></span>
-           <div class="size">
-             <span class="time"></span>
-             <span>Seconds</span>
-           </div>
-           <div class="extra"></div>
-          </div>
-        </div>
-
-        <div id="children">
-        </div>
-
+ <div id="container">
+  <div id="chart">
+   <div id="sidebar">
+    <div id="top">
+      <div class="item">
+       <div class="circle"></div>
+       <span class="name"></span>
+       <div class="size">
+         <span class="time"></span>
+         <span>Seconds</span>
+       </div>
+       <div class="extra"></div>
       </div>
-     </div>
     </div>
+
+    <div id="children"></div>
+   </div>
+  </div>
+ </div>
 
 <script>
     var width = 660,
         height = 700,
-        radius = width / 2,
+        radius = Math.min(width, height) / 2,
         x = d3.scale.linear().range([0, 2 * Math.PI]),
         y = d3.scale.pow().exponent(1.3).domain([0, 1]).range([0, radius]),
         color = d3.scale.category10();
-        padding = 5,
-        duration = 1000;
+        padding = 5
 
     var div = d3.select("#chart")
     var svg = div.append("svg")
@@ -58,11 +56,13 @@
         .innerRadius(function(d) { return Math.max(0, d.y ? y(d.y) : d.y); })
         .outerRadius(function(d) { return Math.max(0, y(d.y + d.dy)); });
 
+    draw()
 
+function draw() {
   d3.json("flare.json", function(error, data) {
-    var path = svg.datum(data).selectAll("path")
-    .data(partition.nodes)
-    .enter()
+    var path = svg.datum(data).selectAll("path").data(partition.nodes)
+
+    path.enter()
     .append("path")
       .each(function (d, i) {
         // Make sure the path id is in the object
@@ -75,9 +75,14 @@
         node = (d.children ? d : d.parent)
         return color(node.name + node.id);
       })
+      .style("cursor", function(d) { return !d.children ? null : "pointer"; })
       .on("mouseover", mouseover)
       .on('mouseout', mouseout)
       .on('click', click);
+
+
+
+      path.exit().remove()
 
       // Depends on the path variable
       function click(d) {
@@ -95,14 +100,11 @@
           .duration(750)
           .attrTween("d", arcTween(d));
 
+        // Use name and id as many names can be identical
         if (d.depth > 0) {
-            path.style("fill", function(d) {
-                // Use name and id as many names can be identical
-                return color(d.name + d.id);
-              })
+            path.style("fill", function(d) { return color(d.name + d.id); })
         } else{
             path.style("fill", function(d) {
-                // Use name and id as many names can be identical
                 node = (d.children ? d : d.parent)
                 return color(node.name + node.id);
               })
@@ -133,6 +135,7 @@
       // Set the initial node
       load()
     });
+}
 
 // Interpolate the scales!
 function arcTween(d) {
@@ -163,12 +166,12 @@ function load() {
 function pulsate(node, original) {
     color = d3.rgb(original)
     node
-    .transition()
-    .duration(700)
-    .style('fill', color.darker(1))
-    .transition()
-    .duration(300)
-    .style('fill', original)
+      .transition()
+      .duration(700)
+      .style('fill', color.darker(1))
+      .transition()
+      .duration(300)
+      .style('fill', original)
 }
 
 function fakeClick(id) {
@@ -268,80 +271,6 @@ function updateSidebar(d) {
     }
 
 }
-
-
-
-(function() {
-
-  var tooltip = window.tooltip = {}
-
-  tooltip.show = function(pos, content, gravity, dist, parentContainer, classes) {
-
-    var container = d3.select('body').selectAll('.tooltip').data([1])
-
-    container.enter().append('div').attr('class', 'tooltip ' + (classes ? classes : 'xy-tooltip'))
-
-    container.html(content)
-
-    gravity = gravity || 'n'
-    dist = dist || 20
-
-    var body = document.getElementsByTagName('body')[0]
-
-    var height = parseInt(container[0][0].offsetHeight)
-    , width = parseInt(container[0][0].offsetWidth)
-    , windowWidth = window.innerWidth
-    , windowHeight = window.innerHeight
-    , scrollTop = body.scrollTop
-    , scrollLeft = body.scrollLeft
-    , left = 0
-    , top = 0
-
-
-    switch (gravity) {
-      case 'e':
-      left = pos[0] - width - dist
-      top = pos[1] - (height / 2)
-      if (left < scrollLeft) left = pos[0] + dist
-        if (top < scrollTop) top = scrollTop + 5
-          if (top + height > scrollTop + windowHeight) top = scrollTop - height - 5
-            break
-          case 'w':
-          left = pos[0] + dist
-          top = pos[1] - (height / 2)
-          if (left + width > windowWidth) left = pos[0] - width - dist
-            if (top < scrollTop) top = scrollTop + 5
-              if (top + height > scrollTop + windowHeight) top = scrollTop - height - 5
-                break
-              case 's':
-              left = pos[0] - (width / 2)
-              top = pos[1] + dist
-              if (left < scrollLeft) left = scrollLeft + 5
-                if (left + width > windowWidth) left = windowWidth - width - 5
-                  if (top + height > scrollTop + windowHeight) top = pos[1] - height - dist
-                    break
-                  case 'n':
-                  left = pos[0] - (width / 2)
-                  top = pos[1] - height - dist
-                  if (left < scrollLeft) left = scrollLeft + 5
-                    if (left + width > windowWidth) left = windowWidth - width - 5
-                      if (scrollTop > top) top = pos[1] + 20
-                        break
-                    }
-
-
-                    container.style('left', left+'px')
-                    container.style('top', top+'px')
-
-                    return container
-                  }
-
-                  tooltip.cleanup = function() {
-      // Find the tooltips, mark them for removal by this class (so other tooltip functions won't find it)
-      var tooltips = d3.selectAll('.tooltip').attr('class','tooltip-pending-removal').transition().duration(250).style('opacity',0).remove()
-
-    }
-  })()
 
 </script>
 </body>
