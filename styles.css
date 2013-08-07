@@ -1,112 +1,136 @@
-  body {
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    background-color: #1d1f20;
-  }
+body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  background-color: #1d1f20;
+  font-size: 14px;
+}
 
-  #container {
-    margin: auto;
-    margin-top: 30px;
-    position: relative;
-    width: 1280px;
-  }
+#container {
+  margin: auto;
+  margin-top: 30px;
+  position: relative;
+  width: 1280px;
+}
 
-  #chart {
-    width: 1280px;
-  }
+#chart {
+  width: 1280px;
+}
 
-  #chart svg {
-    margin-top: 30px;
-    margin-left: 80px;
-  }
+#chart svg {
+  margin-top: 30px;
+  margin-left: 80px;
+}
 
-  #sidebar {
-    height: 702px;
-    width: 400px;
-    padding: 20px;
-    margin-top: 0;
-    margin-bottom: 0;
-    float: right;
-    background-color: #3c4247;
-    color: #fff;
-    overflow: scroll;
-  }
+#select-run {
+  float: left;
+  background-color: #3c4247;
+  color: #fff;
+  width: 840px;
+  padding: 20px 0 20px 0;
+}
 
-  #sidebar .circle {
-    border-radius: 50%;
-    width: 16px;
-    height: 16px;
-    display: inline-block;
-    vertical-align: middle;
-    margin-right: 6px;
-  }
+#select-run span {
+  margin-left: 20px;
+  text-align: middle;
+}
 
-  .extra div {
-    margin-top: 12px;
-    font-size: 12px;
-    word-wrap: break-word;
-    margin-bottom: 10px;
-  }
+#sidebar {
+  height: 702px;
+  width: 400px;
+  padding: 20px;
+  margin-top: 0;
+  margin-bottom: 0;
+  float: right;
+  background-color: #3c4247;
+  color: #fff;
+  overflow: scroll;
+}
 
-  #children {
-    margin-top: 30px;
-    font-size: 12px;
-  }
+#sidebar .circle {
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 6px;
+}
 
-  #children span {
-    margin-left: 4px;
-    margin-right: 4px;
-    vertical-align: middle;
-  }
+.extra div {
+  margin-top: 18px;
+  font-size: 12px;
+  word-wrap: break-word;
+  margin-bottom: 10px;
+}
 
-  #sidebar div.size {
-    float: right;
-  }
+#sidebar #top .extra {
+  margin-top: 19px;
+}
 
-  #sidebar .item {
-    margin: 8px;
-    word-wrap: break-word;
-  }
+#sidebar #top .extra div {
+  margin-top: 4px;
+  margin-bottom: 4px;
+  margin-left: 10px;
+}
 
-  #children .name {
-    width: 100px;
-  }
+#children {
+  margin-top: 30px;
+  font-size: 12px;
+}
 
-  #children .item:hover {
-    cursor: pointer;
-  }
+#children span {
+  margin-left: 4px;
+  margin-right: 4px;
+  vertical-align: middle;
+}
 
-  .tooltip, .tooltip-pending-removal {
-    position: absolute;
-    background-color: rgba(255,255,255,1);
-    padding: 10px;
-    border: 1px solid #ddd;
-    z-index: 10000;
-    display: inline-block;
-    font-family: Arial;
-    font-size: 13px;
-    border-radius: 10px;
-    pointer-events: none;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    user-select: none;
-  }
+#sidebar div.size {
+  float: right;
+}
 
-  .tooltip {
-    transition: opacity 500ms linear;
-    -webkit-transition: opacity 500ms linear;
-    transition-delay: 500ms;
-    -webkit-transition-delay: 500ms;
-    -moz-box-shadow: 4px 4px 8px rgba(0,0,0,.5);
-    -webkit-box-shadow: 4px 4px 8px rgba(0,0,0,.5);
-    box-shadow: 4px 4px 8px rgba(0,0,0,.5);
-  }
+#sidebar .item {
+  margin: 8px;
+  word-wrap: break-word;
+}
+
+#children .name {
+  width: 100px;
+}
+
+#children .item:hover {
+  cursor: pointer;
+}
+
+.tooltip, .tooltip-pending-removal {
+  position: absolute;
+  background-color: rgba(255,255,255,1);
+  padding: 10px;
+  border: 1px solid #ddd;
+  z-index: 10000;
+  display: inline-block;
+  font-family: Arial;
+  font-size: 13px;
+  border-radius: 10px;
+  pointer-events: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.tooltip {
+  transition: opacity 500ms linear;
+  -webkit-transition: opacity 500ms linear;
+  transition-delay: 500ms;
+  -webkit-transition-delay: 500ms;
+  -moz-box-shadow: 4px 4px 8px rgba(0,0,0,.5);
+  -webkit-box-shadow: 4px 4px 8px rgba(0,0,0,.5);
+  box-shadow: 4px 4px 8px rgba(0,0,0,.5);
+}
 
 path {
-  stroke: #1d1f20;
-  stroke: #fff;
-  fill-rule: evenodd;
+stroke: #1d1f20;
+stroke: #fff;
+fill-rule: evenodd;
 }
 
 path:hover {
-    cursor: pointer;
+  cursor: pointer;
 }

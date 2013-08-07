@@ -8,6 +8,16 @@
 <body>
  <div id="container">
   <div id="chart">
+   <div id="select-run">
+    <div id="platforms" style="display: inline">
+      <span>OS</span>
+      <select id="os"></select>
+      <span>Version</span>
+      <select id="os_version"></select>
+    </div>
+    <span>Instance</span>
+    <select id="run"></select>
+   </div>
    <div id="sidebar">
     <div id="top">
       <div class="item">
@@ -27,39 +37,163 @@
  </div>
 
 <script>
-    var width = 660,
-        height = 700,
-        radius = Math.min(width, height) / 2,
-        x = d3.scale.linear().range([0, 2 * Math.PI]),
-        y = d3.scale.pow().exponent(1.3).domain([0, 1]).range([0, radius]),
-        color = d3.scale.category10();
-        padding = 5
+// Setup the select boxes - A lot of ugly magic happens here
+d3.json("available-runs.json", function(error, data) {
+  if (error) {
+      alert(error.statusText + " " + error.status + " - available-runs.json");
+      return console.warn(error);
+    }
 
-    var div = d3.select("#chart")
-    var svg = div.append("svg")
-      .attr("width", width + padding * 2)
-      .attr("height", height + padding * 2)
-    .append("g")
-      .attr("transform", "translate(" + [radius + padding, radius + padding] + ")")
-       .on('mouseleave', function() {
-            // When a user moves outside the main container we should revert the sidebar
-            load()
-        })
+  function item(file) {
+     return data['items'].filter(function(d, i) {
+        return d.value === file;
+     })[0]
+  }
 
-    var partition = d3.layout.partition()
-        .sort(function(a, b) { return d3.ascending(a.value, b.value); })
-        .value(function(d) { return d.size; });
+  // Parse hash information
+  updateFileSelect(data['items']).on('change', function() {
+    file = this.options[this.selectedIndex].__data__.value
+    draw(file)
 
-    var arc = d3.svg.arc()
-        .startAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x))); })
-        .endAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x + d.dx))); })
-        .innerRadius(function(d) { return Math.max(0, d.y ? y(d.y) : d.y); })
-        .outerRadius(function(d) { return Math.max(0, y(d.y + d.dy)); });
+    // Force top level path when changing files
+    setHash(0, file)
+  })
 
-    draw()
+  var hash = loadHash()
+  if (hash.file === null) {
+    var dropdown = d3.selectAll('#run')
+    var file = dropdown.node().options[0].__data__.value
+    var platform_version = 'All'
+    var platform= 'All'
+  } else {
+    // update the selected option
+    var file = hash.file
+    item = item(file)
+    var platform_version = item.platform_version
+    var platform = item.platform
+  }
 
-function draw() {
-  d3.json("flare.json", function(error, data) {
+  // Set data in selects
+  versions = ['All']
+  if (platform_version !== 'All') {
+    versions = versions.concat(data['platforms'][platform])
+  }
+
+  var dropdown = updateSelect('os_version', versions, platform_version)
+  dropdown.on('change', function() {
+    version = this.options[this.selectedIndex].__data__
+    if (version == 'All') {
+        updateFileSelect(data['items'])
+        return;
+    }
+
+    // Filter Files
+    os = d3.select('#os').property("value")
+    updateFileSelect(data['items'].filter(function(d, i) {
+        return d.platform == os && d.platform_version == version;
+    }))
+  })
+
+  // When the OS changes update the OS Versions available
+  var dropdown = updateSelect('os', ['All'].concat(d3.keys(data['platforms'])), platform)
+  dropdown.on('change', function() {
+    name = this.options[this.selectedIndex].__data__
+    if (name == 'All') {
+        updateSelect('os_version', ['All'], 'All')
+        updateFileSelect(data['items'])
+        return;
+    }
+
+    // Filter OS versions
+    updateSelect('os_version', ['All'].concat(data['platforms'][name]))
+    updateFileSelect(data['items'].filter(function(d, i) {
+        return d.platform === name;
+    }))
+  })
+
+  // Draw graph based on the selected data file
+  draw(file)
+})
+
+/* Setup defaults for the chart */
+var width = 660,
+    height = 700,
+    radius = Math.min(width, height) / 2,
+    x = d3.scale.linear().range([0, 2 * Math.PI]),
+    y = d3.scale.pow().exponent(1.3).domain([0, 1]).range([0, radius]),
+    color = d3.scale.category10();
+    padding = 5
+
+var div = d3.select("#chart")
+var svg = div.append("svg")
+  .attr("width", width + padding * 2)
+  .attr("height", height + padding * 2)
+.append("g")
+  .attr("transform", "translate(" + [radius + padding, radius + padding] + ")")
+   .on('mouseleave', function() {
+        // When a user moves outside the main container we revert the sidebar
+        load()
+    })
+
+var partition = d3.layout.partition()
+    .sort(function(a, b) { return d3.ascending(a.value, b.value); })
+    .value(function(d) { return d.size; });
+
+var arc = d3.svg.arc()
+    .startAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x))); })
+    .endAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x + d.dx))); })
+    .innerRadius(function(d) { return Math.max(0, d.y ? y(d.y) : d.y); })
+    .outerRadius(function(d) { return Math.max(0, y(d.y + d.dy)); });
+
+function updateSelect(selector, items, default_value) {
+  var dropdown = d3.select('#' + selector)
+  dropdown.selectAll("option").remove()
+  var options = dropdown.selectAll("option").data(items)
+
+   options
+     .enter()
+      .append("option")
+      .attr("value", function(d){ return d; })
+      .text(function(d){ return d; });
+
+   options.exit().remove()
+   if (typeof default_value !== 'undefined') {
+     dropdown.property("value", default_value).node().focus()
+   }
+
+   return dropdown;
+}
+
+// Prime the File selector
+function updateFileSelect(items, default_value) {
+  var dropdown = d3.selectAll('#run')
+  options = dropdown
+              .selectAll("option")
+              .data(items.sort(function(a, b) { return d3.descending(a.value, b.value); }))
+
+  options
+    .enter()
+      .append("option")
+      .attr("value", function(d){ return d.value; })
+      .text(function(d){ return d.text; });
+
+  options.exit().remove()
+  if (typeof default_value !== 'undefined') {
+    dropdown.property("value", default_value).node().focus()
+  }
+
+  return dropdown;
+}
+
+function draw(file) {
+  d3.json(file + '.json', function(error, data) {
+    if (error) {
+      alert(error.statusText + " " + error.status + " - " + file + ".json");
+      return console.warn(error);
+    }
+
+    // FIXME remove this when we figure out to update properly
+    svg.selectAll('path').remove()
     var path = svg.datum(data).selectAll("path").data(partition.nodes)
 
     path.enter()
@@ -80,15 +214,15 @@ function draw() {
       .on('mouseout', mouseout)
       .on('click', click);
 
-
-
       path.exit().remove()
 
       // Depends on the path variable
       function click(d) {
-        cleanupSidebar()
         updateSidebar(d)
-        location.hash = d.id
+
+        // Make sure the file name is still set
+        hash = loadHash()
+        setHash(d.id, hash.file)
 
         // No point in clicking into a childrenless node
         if (!d.children) {
@@ -105,31 +239,22 @@ function draw() {
             path.style("fill", function(d) { return color(d.name + d.id); })
         } else{
             path.style("fill", function(d) {
-                node = (d.children ? d : d.parent)
-                return color(node.name + node.id);
-              })
+              node = (d.children ? d : d.parent)
+              return color(node.name + node.id);
+            })
         }
       }
 
       function mouseover(d) {
-        cleanupSidebar()
         updateSidebar(d)
         tooltip_text = '<div>'+d.name+'</div>  <div>'+d3.round(d.value, 3)+' secs</div>';
-        if (d.instance_vars.source_line) {
-            tooltip_text = tooltip_text + '  <div>' + d.instance_vars.source_line + '</div>'
-        }
         tooltip.show([d3.event.clientX,d3.event.clientY], tooltip_text)
-
-        node = d3.select('#path-' + d.id)
-        original = node.style('fill')
-        //setInterval(function(){ pulsate(node, original) } , 1000);
+        setPulsate(d.id)
       }
 
-      function mouseout(d, e){
-        // Fix the color back
-        d3.select('#path-' + d.id).style('fill', original)
-        cleanupSidebar()
+      function mouseout(d) {
         tooltip.cleanup()
+        clearPulsate(d.id)
       }
 
       // Set the initial node
@@ -149,29 +274,80 @@ function arcTween(d) {
   };
 }
 
-d3.select(self.frameElement).style("height", height + "px");
-
 // Graph event code
 function load() {
-  var id = 0
-  var hash = location.hash.substring(1);
-  if (hash != "") {
-    id = parseInt(hash)
-  }
-
-  updateSidebar(d3.select('#path-' + id).datum())
-  fakeClick(id)
+  var hash = loadHash()
+  updateSidebar(d3.select('#path-' + hash.id).datum())
+  fakeClick(hash.id)
 }
 
 function pulsate(node, original) {
-    color = d3.rgb(original)
+    var color = d3.rgb(original)
     node
       .transition()
       .duration(700)
-      .style('fill', color.darker(1))
+      .style('fill', color.darker(0.5))
       .transition()
       .duration(300)
       .style('fill', original)
+}
+
+function setPulsate(context) {
+  if (typeof pulsateInterval !== 'undefined') {
+    clearInterval(pulsateInterval)
+    pulsateInterval = 0
+  }
+
+  var id = context
+  if (typeof context === 'object') {
+    var id = d3.select(context).attr('id')
+  }
+
+  var node = d3.select('#path-' + id)
+  original = node.style('fill')
+  pulsateInterval = setInterval(function(){ pulsate(node, original) } , 1000);
+}
+
+function clearPulsate(context) {
+  var id = context
+  if (typeof context === 'object') {
+    var id = d3.select(context).attr('id')
+  }
+
+  // Fix the color back
+  d3.select('#path-' + id).style('fill', original)
+
+  if (typeof pulsateInterval !== 'undefined') {
+    clearInterval(pulsateInterval)
+    pulsateInterval = 0
+  }
+}
+
+function loadHash() {
+  var id = 0,
+      file = null
+  var hash = location.hash.substring(1);
+  if (hash != "") {
+    // Check for filename
+    if (hash.match('/')) {
+      var split = hash.split('/', 2)
+      var file = split[0],
+          id = parseInt(split[1])
+    } else {
+      var id = parseInt(hash)
+    }
+  }
+
+  return {'id': id, 'file': file}
+}
+
+function setHash(id, file) {
+    var output = id
+    if (file !== null) {
+      var output = file + '/' + id
+    }
+
+    location.hash = output
 }
 
 function fakeClick(id) {
@@ -179,39 +355,62 @@ function fakeClick(id) {
     var event = document.createEvent("SVGEvents");
     event.initEvent("click",true,true);
     d3.select('#path-' + id).node().dispatchEvent(event);
-    location.hash = id
-}
 
-function cleanupSidebar() {
-    // FIXME this is shit, improve
-    d3.select('#children').remove()
-    d3.select('#sidebar').append('div').attr('id', 'children')
+    // Make sure the file name is still set
+    hash = loadHash()
+    setHash(id, hash.file)
 }
 
 function updateSidebar(d) {
-    node = d3.select('#path-' + d.id)
+    // Cleanup sidebar
+    d3.select('#children').selectAll('div').remove()
+
+    var node = d3.select('#path-' + d.id)
     d3.select('#top .item .circle').style('background-color', node.style('fill'))
     d3.select('#top .item .name').text(d.name)
     d3.select('#top .item .time').text(d3.round(d.value, 3))
-    d3.select('#top .item .extra').text('')
+    // Setup instance information
+    var extra = d3.select('#top .item .extra')
+    extra.text('')
+    if (typeof d.instance !== 'undefined') {
+      extra.append('p').text('Instance')
+      extra.append('div').html('<strong>Start Time:</strong>&nbsp;' + d['start_time'])
+      extra.append('div').html('<strong>Hostname:</strong>&nbsp;' + d.instance['hostname'])
+      extra.append('div').html('<strong>Role:</strong>&nbsp;' + d.instance['instance_role'])
+      extra.append('div').html('<strong>Provider:</strong>&nbsp;' + d.instance['provider'])
+      if (d.instance['provider'] === 'ec2'){
+        extra.append('div').html('<strong>Location:</strong>:&nbsp;' + d.instance['location'])
+        extra.append('div').html('<strong>Size:</strong>&nbsp;' + d.instance['instance_size'])
+        extra.append('div').html('<strong>Image:</strong>&nbsp;' + d.instance['image_id'])
+      }
+    }
+
+    if (typeof d.env !== 'undefined') {
+      extra.append('p').text('Environment')
+      extra.append('div').html('<strong>Owner:</strong>&nbsp;' + d.env['email'])
+      extra.append('div').html('<strong>Env Name:</strong>&nbsp;' + d.env['name'])
+      extra.append('div').html('<strong>Stack:</strong>&nbsp;' + d.env['stack'])
+    }
+    
 
     // If no children then stop seeking
     if (!d.children) {
       // Build up info about the node
+      var extra = d3.select('.extra')
       if (d.instance_vars.command) {
-        d3.select('.extra').append('div').html('<strong>Command:</strong><br/>' + d.instance_vars.command)
+        extra.append('div').html('<strong>Command:</strong><br/>' + d.instance_vars.command)
       }
 
       if (d.instance_vars.code) {
-        d3.select('.extra').append('div').html('<strong>Code:</strong><br/>' + d.instance_vars.code)
+        extra.append('div').html('<strong>Code:</strong><br/>' + d.instance_vars.code)
       }
 
       if (d.instance_vars.source) {
-        d3.select('.extra').append('div').html('<strong>Source:</strong><br/>' + d.instance_vars.source)
+        extra.append('div').html('<strong>Source:</strong><br/>' + d.instance_vars.source)
       }
 
       if (d.instance_vars.source_line) {
-        d3.select('.extra').append('div').html('<strong>Source Line:</strong><br/>' + d.instance_vars.source_line)
+        extra.append('div').html('<strong>Source Line:</strong><br/>' + d.instance_vars.source_line)
       }
 
       if (
@@ -229,14 +428,14 @@ function updateSidebar(d) {
             type = 'Gem '
         }
 
-        d3.select('.extra').append('div').html('<strong>' + type + 'Package ' + action + ':</strong><br/>' + d.instance_vars.package_name + ' - v' + d.instance_vars.version)
+        extra.append('div').html('<strong>' + type + 'Package ' + action + ':</strong><br/>' + d.instance_vars.package_name + ' - v' + d.instance_vars.version)
       }
 
       return;
     }
 
-    children = d.children
     // Sort based on size (time)
+    children = d.children
     children.sort(function(a, b) { return d3.ascending(a.value, b.value); })
 
     children_div = d3.select('#children')
@@ -254,15 +453,10 @@ function updateSidebar(d) {
             fakeClick(id)
         })
         div.on('mouseover', function() {
-            id = d3.select(this).attr('id')
-            node = d3.select('#path-' + id)
-            original = node.style('fill')
-            //setInterval(function(){ pulsate(node, original) } , 1000);
+            setPulsate(this)
         })
         div.on('mouseout', function() {
-            // Fix the color back
-            id = d3.select(this).attr('id')
-            d3.select('#path-' + id).style('fill', original)
+          clearPulsate(this)
         })
 
         time = div.append('div').classed('size', 'size')

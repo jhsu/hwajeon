@@ -1,4 +1,12 @@
 1.  Hide slices that are too small and cause the annoying whitness
     Basically add the ability to have only whole numbers and discard everything smaller
-3.  See if we can give each slice more weight so smaller slices are more visible
-4.  Improve pulsating so it doesn't lag so much
+2.  Come up with the naming of chef-*.json if possible (can chef output diff stuff for us?)
+3.  Add new files to available to display in the select box
+4.  Look at possibly having fancy line charts to track the deploy times of various sized instances
+    just write to a simple JSON file and keep updating it on every run if doable. can be regenerated on
+    full on runs based on the available chef files.
+5.  Graph out times per component, per instance size of some sort
+6.  Default JSON files
+7.  Add the ability to toggle instance / env info.
+8.  Add provider and instance size as dropdown if there is more than one
+9.  If there is only one option of something then skip the select choice, make it hidden.
