@@ -460,7 +460,7 @@ function updateSidebar(d) {
     if (typeof d.instance !== 'undefined') {
       extra.append('p').text('Instance')
       extra.append('div').html('<strong>Start Time:</strong>&nbsp;' + d['start_time'])
-      extra.append('div').html('<strong>Hplatformtname:</strong>&nbsp;' + d.instance['hplatformtname'])
+      extra.append('div').html('<strong>Hostname:</strong>&nbsp;' + d.instance['hostname'])
       extra.append('div').html('<strong>Role:</strong>&nbsp;' + d.instance['instance_role'])
       extra.append('div').html('<strong>Provider:</strong>&nbsp;' + d.instance['provider'])
       if (d.instance['provider'] === 'ec2'){
