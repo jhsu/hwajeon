@@ -10,13 +10,29 @@
   <div id="chart">
    <div id="select-run">
     <div id="platforms" style="display: inline">
-      <span>OS</span>
-      <select id="os"></select>
-      <span>Version</span>
-      <select id="os_version"></select>
+      <div class="select-item">
+        <span>OS</span>
+        <select id="platform"></select>
+      </div>
+      <div class="select-item">
+        <span>Version</span>
+        <select id="platform_version"></select>
+      </div>
     </div>
-    <span>Instance</span>
-    <select id="run"></select>
+    <div id="providers" style="display: inline">
+      <div class="select-item">
+        <span>Provider</span>
+        <select id="provider"></select>
+      </div>
+      <div class="select-item">
+        <span>Size</span>
+        <select id="instance_size"></select>
+      </div>
+    </div>
+    <div class="select-item">
+      <span>Instance</span>
+      <select id="run"></select>
+    </div>
    </div>
    <div id="sidebar">
     <div id="top">
@@ -27,6 +43,7 @@
          <span class="time"></span>
          <span>Seconds</span>
        </div>
+       <div class="toggle"></div>
        <div class="extra"></div>
       </div>
     </div>
@@ -50,27 +67,22 @@ d3.json("available-runs.json", function(error, data) {
      })[0]
   }
 
-  // Parse hash information
-  updateFileSelect(data['items']).on('change', function() {
-    file = this.options[this.selectedIndex].__data__.value
-    draw(file)
-
-    // Force top level path when changing files
-    setHash(0, file)
-  })
-
   var hash = loadHash()
   if (hash.file === null) {
     var dropdown = d3.selectAll('#run')
     var file = dropdown.node().options[0].__data__.value
     var platform_version = 'All'
-    var platform= 'All'
+    var platform = 'All'
+    var provider = 'All'
+    var instance_size = 'All'
   } else {
     // update the selected option
     var file = hash.file
     item = item(file)
     var platform_version = item.platform_version
     var platform = item.platform
+    var provider = item.provider
+    var instance_size = item.instance_size
   }
 
   // Set data in selects
@@ -79,41 +91,143 @@ d3.json("available-runs.json", function(error, data) {
     versions = versions.concat(data['platforms'][platform])
   }
 
-  var dropdown = updateSelect('os_version', versions, platform_version)
+  // When the platform changes update the platform Versions available
+  var dropdown = updateSelect('platform', ['All'].concat(d3.keys(data['platforms'])), platform)
   dropdown.on('change', function() {
-    version = this.options[this.selectedIndex].__data__
+    name = d3.select(this).property('value')
+    if (name == 'All') {
+        updateSelect('platform_version', ['All'], 'All')
+        updateFileSelect(data['items'])
+        return;
+    }
+
+    // Filter platform versions
+    updateSelect('platform_version', ['All'].concat(data['platforms'][name]))
+    updateFileSelect(data['items'])
+  })
+
+  // Filter platform Version
+  var dropdown = updateSelect('platform_version', versions, platform_version)
+  dropdown.on('change', function() {
+    version = d3.select(this).property('value')
     if (version == 'All') {
         updateFileSelect(data['items'])
         return;
     }
 
     // Filter Files
-    os = d3.select('#os').property("value")
-    updateFileSelect(data['items'].filter(function(d, i) {
-        return d.platform == os && d.platform_version == version;
-    }))
+    updateFileSelect(data['items'])
   })
 
-  // When the OS changes update the OS Versions available
-  var dropdown = updateSelect('os', ['All'].concat(d3.keys(data['platforms'])), platform)
+  // Update Provider
+  var dropdown = updateSelect('provider', ['All'].concat(d3.keys(data['providers'])), provider)
   dropdown.on('change', function() {
-    name = this.options[this.selectedIndex].__data__
-    if (name == 'All') {
-        updateSelect('os_version', ['All'], 'All')
+    provider = d3.select(this).property('value')
+    if (provider == 'All') {
+        updateSelect('instance_size', ['All'], 'All')
         updateFileSelect(data['items'])
         return;
     }
 
-    // Filter OS versions
-    updateSelect('os_version', ['All'].concat(data['platforms'][name]))
-    updateFileSelect(data['items'].filter(function(d, i) {
-        return d.platform === name;
-    }))
+    // Filter instance sice
+    updateSelect('instance_size', ['All'].concat(data['providers'][provider]))
+    updateFileSelect(data['items'])
+  })
+
+  // Set data in selects
+  sizes = ['All']
+  if (provider !== 'All') {
+    sizes = sizes.concat(data['providers'][provider])
+  }
+
+  // Update Instance Size
+  var dropdown = updateSelect('instance_size', sizes, instance_size)
+  dropdown.on('change', function() {
+    size = d3.select(this).property('value')
+    if (size == 'All') {
+        updateFileSelect(data['items'])
+        return;
+    }
+
+    updateFileSelect(data['items'])
+  })
+
+  // Parse hash information
+  updateFileSelect(data['items']).on('change', function() {
+    var file = d3.select(this).property('value')
+    draw(file)
+
+    // Force top level path when changing files
+    setHash(0, file)
   })
 
   // Draw graph based on the selected data file
   draw(file)
 })
+
+function updateSelect(selector, items, default_value) {
+  var dropdown = d3.select('#' + selector)
+  dropdown.selectAll("option").remove()
+  var options = dropdown.selectAll("option").data(items)
+
+   options
+     .enter()
+      .append("option")
+      .attr("value", function(d){ return d; })
+      .text(function(d){ return d; });
+
+   options.exit().remove()
+   if (typeof default_value !== 'undefined') {
+     dropdown.property("value", default_value).node().focus()
+   }
+
+   return dropdown;
+}
+
+// Prime the File selector
+function updateFileSelect(items, default_value) {
+  // Filter Data
+  var filters = [
+   'platform',
+   'platform_version',
+   'provider',
+   'instance_size'
+  ]
+  items = items.filter(function(d, i) {
+    var keep = true
+    filters.forEach(function (element) {
+      value = d3.select('#' + element).property("value")
+      if (value === 'All') {
+        return;
+      }
+
+      if (d[element] !== value) {
+        keep = false
+      }
+    })
+
+    return keep;
+  })
+
+  var dropdown = d3.selectAll('#run')
+  dropdown.selectAll("option").remove()
+  var options = dropdown
+              .selectAll("option")
+              .data(items.sort(function(a, b) { return d3.descending(a.value, b.value); }))
+
+  options
+    .enter()
+      .append("option")
+      .attr("value", function(d){ return d.value; })
+      .text(function(d){ return d.text; });
+
+  options.exit().remove()
+  if (typeof default_value !== 'undefined') {
+    dropdown.property("value", default_value).node().focus()
+  }
+
+  return dropdown;
+}
 
 /* Setup defaults for the chart */
 var width = 660,
@@ -145,45 +259,6 @@ var arc = d3.svg.arc()
     .innerRadius(function(d) { return Math.max(0, d.y ? y(d.y) : d.y); })
     .outerRadius(function(d) { return Math.max(0, y(d.y + d.dy)); });
 
-function updateSelect(selector, items, default_value) {
-  var dropdown = d3.select('#' + selector)
-  dropdown.selectAll("option").remove()
-  var options = dropdown.selectAll("option").data(items)
-
-   options
-     .enter()
-      .append("option")
-      .attr("value", function(d){ return d; })
-      .text(function(d){ return d; });
-
-   options.exit().remove()
-   if (typeof default_value !== 'undefined') {
-     dropdown.property("value", default_value).node().focus()
-   }
-
-   return dropdown;
-}
-
-// Prime the File selector
-function updateFileSelect(items, default_value) {
-  var dropdown = d3.selectAll('#run')
-  options = dropdown
-              .selectAll("option")
-              .data(items.sort(function(a, b) { return d3.descending(a.value, b.value); }))
-
-  options
-    .enter()
-      .append("option")
-      .attr("value", function(d){ return d.value; })
-      .text(function(d){ return d.text; });
-
-  options.exit().remove()
-  if (typeof default_value !== 'undefined') {
-    dropdown.property("value", default_value).node().focus()
-  }
-
-  return dropdown;
-}
 
 function draw(file) {
   d3.json(file + '.json', function(error, data) {
@@ -357,8 +432,7 @@ function fakeClick(id) {
     d3.select('#path-' + id).node().dispatchEvent(event);
 
     // Make sure the file name is still set
-    hash = loadHash()
-    setHash(id, hash.file)
+    setHash(id, loadHash().file)
 }
 
 function updateSidebar(d) {
@@ -369,13 +443,24 @@ function updateSidebar(d) {
     d3.select('#top .item .circle').style('background-color', node.style('fill'))
     d3.select('#top .item .name').text(d.name)
     d3.select('#top .item .time').text(d3.round(d.value, 3))
+    d3.select('#top .item .toggle').text('')
     // Setup instance information
     var extra = d3.select('#top .item .extra')
     extra.text('')
+
+    // Show / hide instance info
+    if (typeof d.instance !== 'undefined' && typeof d.env !== 'undefined') {
+      var div = d3.select('#top .item .toggle')
+      div.text('Toggle Instance Information').on('click', function() {
+       swap = (extra.style('display') === 'block' ? 'none' : 'block')
+       extra.style('display', swap)
+      })
+    }
+
     if (typeof d.instance !== 'undefined') {
       extra.append('p').text('Instance')
       extra.append('div').html('<strong>Start Time:</strong>&nbsp;' + d['start_time'])
-      extra.append('div').html('<strong>Hostname:</strong>&nbsp;' + d.instance['hostname'])
+      extra.append('div').html('<strong>Hplatformtname:</strong>&nbsp;' + d.instance['hplatformtname'])
       extra.append('div').html('<strong>Role:</strong>&nbsp;' + d.instance['instance_role'])
       extra.append('div').html('<strong>Provider:</strong>&nbsp;' + d.instance['provider'])
       if (d.instance['provider'] === 'ec2'){

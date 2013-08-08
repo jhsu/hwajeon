@@ -7,6 +7,4 @@
     full on runs based on the available chef files.
 5.  Graph out times per component, per instance size of some sort
 6.  Default JSON files
-7.  Add the ability to toggle instance / env info.
-8.  Add provider and instance size as dropdown if there is more than one
-9.  If there is only one option of something then skip the select choice, make it hidden.
+7.  If there is only one option of something then skip the select choice, make it hidden.

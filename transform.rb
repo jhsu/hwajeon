@@ -4,7 +4,7 @@ require 'multi_json'
 require 'date'
 require 'pp'
 
-def update_available(processed_file, platform, platform_version)
+def update_available(processed_file, info)
   data = {}
   file = 'available-runs.json'
   if File.file?(file)
@@ -15,6 +15,9 @@ def update_available(processed_file, platform, platform_version)
   if data.has_key?('items') === false
     data['items'] = []
   end
+
+  platform = info['instance']['platform']
+  platform_version = info['instance']['platform_version']
 
   # make sure platform exists
   if data.has_key?('platforms') === false
@@ -28,12 +31,29 @@ def update_available(processed_file, platform, platform_version)
   data['platforms'][platform].push(platform_version)
   data['platforms'][platform] = data['platforms'][platform].select{|d| d}.uniq
 
+  provider = info['instance']['provider']
+  instance_size = info['instance']['instance_size']
+
+  # make sure platform exists
+  if data.has_key?('providers') === false
+    data['providers'] = {}
+  end
+
+  if data['providers'].has_key?(provider) === false
+    data['providers'][provider] = []
+  end
+
+  data['providers'][provider].push(instance_size)
+  data['providers'][provider] = data['providers'][provider].select{|d| d}.uniq
+
   # Add item and deduplicate
   data['items'].push({
     'value' => processed_file,
     'text' => processed_file,
     'platform' => platform,
-    'platform_version' => platform_version
+    'platform_version' => platform_version,
+    'provider' => provider,
+    'instance_size' => instance_size
   })
   data['items'] = data['items'].select{|d| d['value']}.uniq
 
@@ -52,6 +72,8 @@ def process_file(json_file)
   machine_data['instance_size'] = 'Unknown'
   machine_data['image_id'] = 'Unknown'
   machine_data['location'] = 'Unknown'
+  machine_data['platform'] = data['node']['automatic']['platform']
+  machine_data['platform_version'] = data['node']['automatic']['platform_version']
   machine_data['provider'] = data['node']['automatic']['cloud']['provider']
   if data['node']['automatic']['cloud']['provider'] == 'ec2'
     machine_data['instance_size'] = data['node']['automatic']['ec2']['instance_type']
@@ -115,7 +137,7 @@ def process_file(json_file)
   File.open(name, 'w').write(MultiJson.dump(data3, :pretty => true))
 
   # update available
-  update_available(name[0..-6], data['node']['automatic']['platform'], data['node']['automatic']['platform_version'])
+  update_available(name[0..-6], data3)
 
   return name
 end

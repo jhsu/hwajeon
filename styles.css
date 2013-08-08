@@ -28,9 +28,18 @@ body {
   padding: 20px 0 20px 0;
 }
 
-#select-run span {
+.select-item {
+  float: left;
+}
+
+.select-item span {
+  display: block;
   margin-left: 20px;
   text-align: middle;
+}
+
+.select-item select {
+  margin-left: 20px;
 }
 
 #sidebar {
@@ -61,8 +70,10 @@ body {
   margin-bottom: 10px;
 }
 
-#sidebar #top .extra {
+#sidebar #top .toggle {
   margin-top: 19px;
+  cursor: pointer;
+  font-size: 10px;
 }
 
 #sidebar #top .extra div {

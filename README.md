@@ -32,3 +32,7 @@ To process only one file and have it automagically appended to available-run.jso
 
 The system is pretty smart about not duplicating entries so it is safe to parse the same
 file multiple times.
+
+
+
+Only tested on the latest Chrome!
