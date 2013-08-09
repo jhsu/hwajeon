@@ -12,21 +12,21 @@
     <div id="platforms" style="display: inline">
       <div class="select-item">
         <span>OS</span>
-        <select id="platform"></select>
+        <select id="platform"><option value="All">All</option></select>
       </div>
       <div class="select-item">
         <span>Version</span>
-        <select id="platform_version"></select>
+        <select id="platform_version"><option value="All">All</option></select>
       </div>
     </div>
     <div id="providers" style="display: inline">
       <div class="select-item">
         <span>Provider</span>
-        <select id="provider"></select>
+        <select id="provider"><option value="All">All</option></select>
       </div>
       <div class="select-item">
         <span>Size</span>
-        <select id="instance_size"></select>
+        <select id="instance_size"><option value="All">All</option></select>
       </div>
     </div>
     <div class="select-item">
@@ -60,6 +60,15 @@ d3.json("available-runs.json", function(error, data) {
       alert(error.statusText + " " + error.status + " - available-runs.json");
       return console.warn(error);
     }
+
+  // Parse hash information
+  updateFileSelect(data['items']).on('change', function() {
+    var file = d3.select(this).property('value')
+    draw(file)
+
+    // Force top level path when changing files
+    setHash(0, file)
+  })
 
   function item(file) {
      return data['items'].filter(function(d, i) {
@@ -150,15 +159,6 @@ d3.json("available-runs.json", function(error, data) {
     }
 
     updateFileSelect(data['items'])
-  })
-
-  // Parse hash information
-  updateFileSelect(data['items']).on('change', function() {
-    var file = d3.select(this).property('value')
-    draw(file)
-
-    // Force top level path when changing files
-    setHash(0, file)
   })
 
   // Draw graph based on the selected data file
