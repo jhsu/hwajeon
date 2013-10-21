@@ -83,8 +83,10 @@ def process_file(json_file)
 
   env = {}
   env['email'] = data['node']['normal']['alert_email']
-  env['name'] = data['node']['normal']['environment']['name']
-  env['stack'] = data['node']['normal']['environment']['stack']
+  ey = data['node']['normal']['engineyard']
+  environment = ey['environment']
+  env['name'] = environment['name']
+  env['stack'] = "ubuntu-precise-0.2" # environment['stack']
 
   # data['node']['normal']['total_memory_mb']
   # data['node']['automatic']['cpu'] # bunch more data under here
