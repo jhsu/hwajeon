@@ -95,23 +95,23 @@ d3.json("available-runs.json", function(error, data) {
   }
 
   // Set data in selects
-  versions = ['All']
+  versions = []
   if (platform_version !== 'All') {
     versions = versions.concat(data['platforms'][platform])
   }
 
   // When the platform changes update the platform Versions available
-  var dropdown = updateSelect('platform', ['All'].concat(d3.keys(data['platforms'])), platform)
+  var dropdown = updateSelect('platform', d3.keys(data['platforms']), platform)
   dropdown.on('change', function() {
     name = d3.select(this).property('value')
     if (name == 'All') {
-        updateSelect('platform_version', ['All'], 'All')
-        updateFileSelect(data['items'])
-        return;
+      updateSelect('platform_version', [], 'All')
+      updateFileSelect(data['items'])
+      return;
     }
 
     // Filter platform versions
-    updateSelect('platform_version', ['All'].concat(data['platforms'][name]))
+    updateSelect('platform_version', data['platforms'][name])
     updateFileSelect(data['items'])
   })
 
@@ -120,8 +120,8 @@ d3.json("available-runs.json", function(error, data) {
   dropdown.on('change', function() {
     version = d3.select(this).property('value')
     if (version == 'All') {
-        updateFileSelect(data['items'])
-        return;
+      updateFileSelect(data['items'])
+      return;
     }
 
     // Filter Files
@@ -129,22 +129,22 @@ d3.json("available-runs.json", function(error, data) {
   })
 
   // Update Provider
-  var dropdown = updateSelect('provider', ['All'].concat(d3.keys(data['providers'])), provider)
+  var dropdown = updateSelect('provider', d3.keys(data['providers']), provider)
   dropdown.on('change', function() {
     provider = d3.select(this).property('value')
     if (provider == 'All') {
-        updateSelect('instance_size', ['All'], 'All')
-        updateFileSelect(data['items'])
-        return;
+      updateSelect('instance_size', [], 'All')
+      updateFileSelect(data['items'])
+      return;
     }
 
     // Filter instance sice
-    updateSelect('instance_size', ['All'].concat(data['providers'][provider]))
+    updateSelect('instance_size', data['providers'][provider])
     updateFileSelect(data['items'])
   })
 
   // Set data in selects
-  sizes = ['All']
+  sizes = []
   if (provider !== 'All') {
     sizes = sizes.concat(data['providers'][provider])
   }
@@ -154,8 +154,8 @@ d3.json("available-runs.json", function(error, data) {
   dropdown.on('change', function() {
     size = d3.select(this).property('value')
     if (size == 'All') {
-        updateFileSelect(data['items'])
-        return;
+      updateFileSelect(data['items'])
+      return;
     }
 
     updateFileSelect(data['items'])
@@ -166,9 +166,11 @@ d3.json("available-runs.json", function(error, data) {
 })
 
 function updateSelect(selector, items, default_value) {
+  var data = ['All'].concat(items)
+
   var dropdown = d3.select('#' + selector)
   dropdown.selectAll("option").remove()
-  var options = dropdown.selectAll("option").data(items)
+  var options = dropdown.selectAll("option").data(data)
 
    options
      .enter()
@@ -267,6 +269,7 @@ function draw(file) {
       return console.warn(error);
     }
 
+    var svg = d3.select("#chart").select('svg').selectAll('g')
     // FIXME remove this when we figure out to update properly
     svg.selectAll('path').remove()
     var path = svg.datum(data).selectAll("path").data(partition.nodes)
@@ -335,18 +338,18 @@ function draw(file) {
       // Set the initial node
       load()
     });
-}
 
-// Interpolate the scales!
-function arcTween(d) {
-  var xd = d3.interpolate(x.domain(), [d.x, d.x + d.dx]),
-      yd = d3.interpolate(y.domain(), [d.y, 1]),
-      yr = d3.interpolate(y.range(), [d.y ? 20 : 0, radius]);
-  return function(d, i) {
-    return i
-        ? function(t) { return arc(d); }
-        : function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); return arc(d); };
-  };
+  // Interpolate the scales!
+  function arcTween(d) {
+    var xd = d3.interpolate(x.domain(), [d.x, d.x + d.dx]),
+        yd = d3.interpolate(y.domain(), [d.y, 1]),
+        yr = d3.interpolate(y.range(), [d.y ? 20 : 0, radius]);
+    return function(d, i) {
+      return i
+          ? function(t) { return arc(d); }
+          : function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); return arc(d); };
+    };
+  }
 }
 
 // Graph event code
