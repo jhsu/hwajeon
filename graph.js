@@ -57,9 +57,18 @@ function transform(data) {
         }
 
         env = {}
-        // env['email'] = data['node']['normal']['alert_email']
-        // env['name'] = data['node']['normal']['environment']['name']
-        // env['stack'] = data['node']['normal']['environment']['stack']
+        // Cluster Cookbooks
+        if ('engineyard' in data['node']['normal']) {
+          // env['email'] = data['node']['normal']['alert_email']
+          ey = data['node']['normal']['engineyard']
+          environment = ey['environment']
+          env['name'] = environment['name']
+          // env['stack'] = "ubuntu-precise-0.2" # environment['stack']
+        } else {
+          // env['email'] = data['node']['normal']['alert_email']
+          // env['name'] = data['node']['normal']['environment']['name']
+          // env['stack'] = data['node']['normal']['environment']['stack']
+        }
 
         // data['node']['normal']['total_memory_mb']
         // data['node']['automatic']['cpu'] # bunch more data under here
@@ -141,6 +150,7 @@ function draw(file) {
     }
 
     data = transform(data)
+    drawSidebar()
 
     var svg = d3.select("#chart").select('svg').selectAll('g')
     // FIXME remove this when we figure out to update properly
@@ -315,9 +325,24 @@ function fakeClick(id) {
     setHash(id, loadHash().file)
 }
 
+function drawSidebar() {
+  // Reduce the requirement for sidebar HTML in the main template
+  var sidebar = d3.select('#chart').append('div').attr('id', 'sidebar')
+  var top = sidebar.append('div').attr('id', 'top')
+  var item = top.append('div').classed('item', true)
+  item.append('div').classed('circle', true)
+  item.append('span').classed('name', true)
+  var size = item.append('span')
+  size.append('span').classed('time', true)
+  size.append('span').text('Seconds')
+  item.append('div').classed('toggle', true)
+  item.append('div').classed('extra', true)
+}
+
 function updateSidebar(d) {
     // Cleanup sidebar
-    d3.select('#children').selectAll('div').remove()
+    d3.select('#children').remove()
+    d3.select('#sidebar').append('div').attr('id', 'children')
 
     var node = d3.select('#path-' + d.id)
     d3.select('#top .item .circle').style('background-color', node.style('fill'))
