@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" type="text/css" href="styles.css">
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="d3-tooltip.js"></script>
+</head>
+<body>
+ <div id="container">
+  <div id="chart">
+   <div id="sidebar">
+    <div id="top">
+      <div class="item">
+       <div class="circle"></div>
+       <span class="name"></span>
+       <div class="size">
+         <span class="time"></span>
+         <span>Seconds</span>
+       </div>
+       <div class="toggle"></div>
+       <div class="extra"></div>
+      </div>
+    </div>
+
+    <div id="children"></div>
+   </div>
+  </div>
+ </div>
+
+<script src="graph.js"></script>
+<script>
+//draw('processed-2013-12-13_02:34:43-f4054d97-5680-432f-8edb-8c0965cb5306')
+draw('chef_report')
+</script>
+</body>
+</html>

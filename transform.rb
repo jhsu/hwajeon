@@ -62,20 +62,21 @@ end
 
 def process_file(json_file)
   data = MultiJson.load(File.read(json_file))
-  all_resources = data["all_resources"]
-  cookbooks = all_resources.map {|r| r["instance_vars"]["cookbook_name"]}.uniq
 
   machine_data = {}
   machine_data['instance_role'] = data['node']['normal']['instance_role']
-  machine_data['hostname'] = data['node']['automatic']['cloud']['public_hostname']
+  #machine_data['hostname'] = data['node']['automatic']['cloud']['public_hostname']
+  machine_data['hostname'] = ''
 
+  machine_data['provider'] = 'Unknown'
   machine_data['instance_size'] = 'Unknown'
   machine_data['image_id'] = 'Unknown'
   machine_data['location'] = 'Unknown'
   machine_data['platform'] = data['node']['automatic']['platform']
   machine_data['platform_version'] = data['node']['automatic']['platform_version']
-  machine_data['provider'] = data['node']['automatic']['cloud']['provider']
+
   if data['node']['automatic']['cloud']['provider'] == 'ec2'
+      machine_data['provider'] = data['node']['automatic']['cloud']['provider']
     machine_data['instance_size'] = data['node']['automatic']['ec2']['instance_type']
     machine_data['image_id'] = data['node']['automatic']['ec2']['ami_id']
     machine_data['location'] = data['node']['automatic']['ec2']['placement_availability_zone']
@@ -87,6 +88,9 @@ def process_file(json_file)
   environment = ey['environment']
   env['name'] = environment['name']
   env['stack'] = "ubuntu-precise-0.2" # environment['stack']
+
+  #env['name'] = data['node']['normal']['environment']['name']
+  #env['stack'] = data['node']['normal']['environment']['stack']
 
   # data['node']['normal']['total_memory_mb']
   # data['node']['automatic']['cpu'] # bunch more data under here
@@ -102,11 +106,14 @@ def process_file(json_file)
   data3['env'] = env
   data3["children"] = []
 
+  all_resources = data["all_resources"]
+  cookbooks = all_resources.map {|r| r["instance_vars"]["cookbook_name"]}.uniq
+
   cookbooks.each do |cookbook|
     cresources = all_resources.select {|r| r["instance_vars"]["cookbook_name"] == cookbook}
 
     cdata = {}
-    cdata["instance_vars"] = { "name" => cookbook}
+    cdata["instance_vars"] = { "name" => cookbook }
     cdata['name'] = cookbook
     cdata['elapsed_time'] = cresources.first['instance_vars']['elapsed_time']
     cdata['size'] = cdata['elapsed_time']
