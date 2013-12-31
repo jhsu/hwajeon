@@ -1,3 +1,5 @@
+drawSidebar()
+
 /* Setup defaults for the chart */
 var width = 660,
     height = 700,
@@ -7,8 +9,8 @@ var width = 660,
     color = d3.scale.category10();
     padding = 5
 
-var div = d3.select("#chart")
-var svg = div.append("svg")
+var svg = d3.select("#chart").append("svg")
+  svg
   .attr("width", width + padding * 2)
   .attr("height", height + padding * 2)
 .append("g")
@@ -150,7 +152,6 @@ function draw(file) {
     }
 
     data = transform(data)
-    drawSidebar()
 
     var svg = d3.select("#chart").select('svg').selectAll('g')
     // FIXME remove this when we figure out to update properly
@@ -332,7 +333,7 @@ function drawSidebar() {
   var item = top.append('div').classed('item', true)
   item.append('div').classed('circle', true)
   item.append('span').classed('name', true)
-  var size = item.append('span')
+  var size = item.append('div').classed('size', true)
   size.append('span').classed('time', true)
   size.append('span').text('Seconds')
   item.append('div').classed('toggle', true)
