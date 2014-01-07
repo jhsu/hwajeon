@@ -335,7 +335,7 @@ function drawSidebar() {
   item.append('span').classed('name', true)
   var size = item.append('div').classed('size', true)
   size.append('span').classed('time', true)
-  size.append('span').text('Seconds')
+  size.append('span').text(' Seconds')
   item.append('div').classed('toggle', true)
   item.append('div').classed('extra', true)
 }
@@ -367,6 +367,7 @@ function updateSidebar(d) {
       extra.append('p').text('Instance')
       extra.append('div').html('<strong>Start Time:</strong>&nbsp;' + d['start_time'])
       extra.append('div').html('<strong>End Time:</strong>&nbsp;' + d['end_time'])
+      extra.append('div').html('<strong>Chef Run Time:</strong>&nbsp;' + d['elapsed_time'] + ' Seconds')
       extra.append('div').html('<strong>Hostname:</strong>&nbsp;' + d.instance['hostname'])
       extra.append('div').html('<strong>Role:</strong>&nbsp;' + d.instance['instance_role'])
       extra.append('div').html('<strong>Provider:</strong>&nbsp;' + d.instance['provider'])
@@ -387,40 +388,74 @@ function updateSidebar(d) {
 
     // If no children then stop seeking
     if (!d.children) {
+      node = d.instance_vars
       // Build up info about the node
       var extra = d3.select('.extra')
-      if (d.instance_vars.command) {
-        extra.append('div').html('<strong>Command:</strong><br/>' + d.instance_vars.command)
-      }
-
-      if (d.instance_vars.code) {
-        extra.append('div').html('<strong>Code:</strong><br/>' + d.instance_vars.code)
-      }
-
-      if (d.instance_vars.source) {
-        extra.append('div').html('<strong>Source:</strong><br/>' + d.instance_vars.source)
-      }
-
-      if (d.instance_vars.source_line) {
-        extra.append('div').html('<strong>Source Line:</strong><br/>' + d.instance_vars.source_line)
-      }
-
       if (
-        d.instance_vars.resource_name === 'package' ||
-        d.instance_vars.resource_name === 'gem_package'
+        node.resource_name === 'package' ||
+        node.resource_name === 'gem_package'
       ) {
-        if (typeof d.instance_vars.action === 'array') {
-            action = d.instance_vars.action[0]
+        if (typeof node.action === 'array') {
+            action = node.action[0]
         } else {
-            action = d.instance_vars.action
+            action = node.action
         }
 
-        type = ''
-        if (d.instance_vars.resource_name === 'gem_package') {
+        type = 'APT '
+        if (node.resource_name === 'gem_package') {
             type = 'Gem '
         }
 
-        extra.append('div').html('<strong>' + type + 'Package ' + action + ':</strong><br/>' + d.instance_vars.package_name + ' - v' + d.instance_vars.version)
+        html = '<strong>' + type + 'Package ' + action + ':</strong><br/>' + node.package_name + ' - '
+        if (node.version) {
+          html += 'v' + node.version
+        } else {
+          html += 'Already installed'
+        }
+        extra.append('div').html(html)
+        console.log(d)
+     } else {
+        if (typeof node.action === 'array') {
+            action = node.join(', ')
+        } else {
+            action = node.action
+        }
+
+        extra.append('div').html('<strong>Action:</strong><br/>' + action)
+
+       if (node.command) {
+          extra.append('div').html('<strong>Command:</strong><br/>' + node.command)
+       }
+
+       if (node.resource_name == 'file') {
+         html  = '<strong>Path:</strong><br/>'
+         html += node.path + '<br/>'
+         html += 'Owner: ' + node.owner + '<br/>'
+         html += 'Group: ' + node.group + '<br/>'
+         html += 'Mode: ' + node.mode + '<br/>'
+         extra.append('div').html(html)
+       }
+
+       if (node.code) {
+         extra.append('div').html('<strong>Code:</strong><br/>' + node.code)
+       }
+
+       if (node.source) {
+          extra.append('div').html('<strong>Source:</strong><br/>' + node.source)
+       }
+
+        if (node.resource_name == 'apt_repository') {
+          html =  '<strong>Adding Apt Repository</strong><br/>'
+          html += 'URI: ' + node.uri + '<br/>'
+          html += 'Keyserver: ' + node.keyserver + '<br/>'
+          html += 'GPG Key: ' + node.key + '<br/>'
+          html += 'Distribution: ' + node.distribution + '<br/>'
+          extra.append('div').html(html)
+        }
+      }
+
+      if (node.source_line) {
+        extra.append('div').html('<strong>Recipe Line:</strong><br/>' + node.source_line)
       }
 
       return;
