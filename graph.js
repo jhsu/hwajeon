@@ -413,7 +413,6 @@ function updateSidebar(d) {
           html += 'Already installed'
         }
         extra.append('div').html(html)
-        console.log(d)
      } else {
         if (typeof node.action === 'array') {
             action = node.join(', ')
